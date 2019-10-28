@@ -17,27 +17,33 @@ const buildLinkList = function() {
   const markdownFilesWithTitles = _.zip(
     markdownFiles,
     markdownFiles.map(f =>
-        getTitleFromMarkdown(fs.readFileSync(`${buildFolder}/content/${f}`,'utf-8'))
+      getTitleFromMarkdown(
+        fs.readFileSync(`${buildFolder}/content/${f}`, "utf-8")
+      )
     )
   );
   return `<ul>${markdownFilesWithTitles
-    .map(x => `<li><a href="${x[0]}.html">${x[1]}</a></li>`)
+    .map(x => `<li><a href="${x[0].replace('.md','')}.html">${x[1]}</a></li>`)
     .join("")}
     </ul>`;
 };
 
-const buildDefaultContent = function() {
+const buildContent = function(fileName) {
   return converter.makeHtml(
-    fs.readFileSync(`${buildFolder}/content/index.md`, "utf-8")
+    fs.readFileSync(`${buildFolder}/content/${fileName}`, "utf-8")
   );
 };
 
 const getTitleFromMarkdown = function(markdown) {
-    const match = markdown.match(/#\s.*/);
-    return match === null ? "" : match[0].replace(/#\s/,'');
+  const match = markdown.match(/#\s.*/);
+  return match === null ? "" : match[0].replace(/#\s/, "");
 };
 
-mkdirp(`${buildFolder}/_build`, function(err) {
+mkdirp.sync(`${buildFolder}/_build`);
+
+
+let markdownFile;
+for (markdownFile of getMarkdownFiles()) {
   let templateFileContents = fs.readFileSync(
     `${buildFolder}/index.html`,
     "utf-8"
@@ -48,8 +54,8 @@ mkdirp(`${buildFolder}/_build`, function(err) {
   );
   templateFileContents = templateFileContents.replace(
     /{ content }/i,
-    buildDefaultContent()
+    buildContent(markdownFile)
   );
 
-  fs.writeFileSync(`${buildFolder}/_build/index.html`, templateFileContents);
-});
+  fs.writeFileSync(`${buildFolder}/_build/${markdownFile.replace('.md','')}.html`, templateFileContents);
+}
